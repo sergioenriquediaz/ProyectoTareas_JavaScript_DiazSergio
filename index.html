@@ -1,23 +1,51 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>My Website</title>
-    <link rel="stylesheet" href="./style.css">
-    <link rel="icon" href="./favicon.ico" type="image/x-icon">
-  </head>
-  <body>
-    <button id="ImportarTarea">Importar tareas</button>
-    <button id="marcarTarea">Marcar tareas</button>
-    <button id="vaciarLista">Vaciar Lista</button>
-    <button id="nuevaTarea">Nueva tarea</button>
-    <button id="actualizarTarea">Actualizar tarea</button>
-    <button id="eliminarTarea">Eliminar Tarea</button>
-    <main>
-        <h1>Welcome to My Website</h1>  
-    </main>
-    <script src="index.js"></script>
-  </body>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Taskly: gestor de tareas con Web Components, Shadow DOM y persistencia local.">
+  <meta name="theme-color" content="#f6f5f1" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#121715" media="(prefers-color-scheme: dark)">
+  <title>Taskly · Gestor de tareas</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Aplica el tema guardado antes de pintar para evitar parpadeos -->
+  <script>
+    try {
+      var savedTheme = localStorage.getItem('taskly:theme');
+      if (savedTheme === 'light' || savedTheme === 'dark') {
+        document.documentElement.dataset.theme = savedTheme;
+      }
+    } catch (e) { /* almacenamiento no disponible */ }
+  </script>
+
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <task-app>
+    <!-- Contenido visible mientras se registran los componentes -->
+    <div class="boot" role="status">
+      <span class="boot__spinner" aria-hidden="true"></span>
+      Cargando Taskly…
+    </div>
+  </task-app>
+
+  <div class="file-warning" id="file-warning" hidden role="alert">
+    <strong>Abre la aplicación desde un servidor local.</strong>
+    Los navegadores bloquean los módulos JavaScript cuando el archivo se abre con <code>file://</code>.
+    Ejecuta <code>python -m http.server 5500</code> (o <code>npx serve .</code>) en la carpeta del proyecto
+    y visita <code>http://localhost:5500</code>. Consulta el README para más opciones.
+  </div>
+
+  <noscript>
+    <p class="file-warning">Taskly necesita JavaScript activado para funcionar.</p>
+  </noscript>
+
+  <script>
+    if (location.protocol === 'file:') {
+      document.getElementById('file-warning').hidden = false;
+    }
+  </script>
+</body>
 </html>
