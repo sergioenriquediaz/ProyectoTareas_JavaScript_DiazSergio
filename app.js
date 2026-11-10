@@ -1,3 +1,4 @@
+// 
 const API_URL = 'https://jsonplaceholder.typicode.com/todos';
 const STORAGE_KEY = 'tareas';
 
@@ -5,6 +6,8 @@ const today = () => new Date().toLocaleDateString('en-CA'); // AAAA-MM-DD en hor
 const formatDate = (d) => new Date(`${d}T00:00`).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' });
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
+// 
+// 
 function newId(origin, used) {
   let id;
   do {
@@ -15,6 +18,9 @@ function newId(origin, used) {
   return id;
 }
 
+// Base: crea el Shadow DOM y ayuda a emitir eventos.
+// Los estilos globales no entran en el Shadow DOM, por eso cada componente
+// enlaza styles.css dentro de su propio Shadow DOM.
 class Base extends HTMLElement {
   constructor(html) {
     super();
@@ -24,6 +30,7 @@ class Base extends HTMLElement {
   emit(type, detail) { this.dispatchEvent(new CustomEvent(type, { detail, bubbles: true, composed: true })); }
 }
 
+// Modal del formulario (crear / editar)
 customElements.define('task-form', class extends Base {
   constructor() {
     super(`
@@ -31,6 +38,7 @@ customElements.define('task-form', class extends Base {
         <form method="dialog">
           <h2 id="form-title"></h2>
           <label>Título <input name="title" required maxlength="120" autocomplete="off"></label>
+          <label>Descripción <textarea name="description" rows="3" maxlength="300" placeholder="Opcional: una breve descripción de la tarea"></textarea></label>
           <label>Fecha de registro <input name="date" type="date" required></label>
           <label class="check"><input name="completed" type="checkbox"> Completada</label>
           <footer>
@@ -39,29 +47,31 @@ customElements.define('task-form', class extends Base {
           </footer>
         </form>
       </dialog>`);
-    const { title, date, completed } = this.$('form').elements;
+    const { title, description, date, completed } = this.$('form').elements;
     title.oninput = () => title.setCustomValidity(title.value.trim().length < 3 ? 'Escribe al menos 3 caracteres.' : '');
     this.$('#cancel').onclick = () => this.$('dialog').close();
-
+    // method="dialog": el navegador valida y cierra el modal; aquí solo se emiten los datos
     this.$('form').onsubmit = () => this.emit('save', {
-      id: this.editingId, title: title.value.trim(), date: date.value, completed: completed.checked,
+      id: this.editingId, title: title.value.trim(), description: description.value.trim(),
+      date: date.value, completed: completed.checked,
     });
   }
 
   open(task) {
-    const { title, date, completed } = this.$('form').elements;
+    const { title, description, date, completed } = this.$('form').elements;
     this.editingId = task?.id;
     this.$('#form-title').textContent = task ? 'Editar tarea' : 'Nueva tarea';
     title.value = task?.title ?? '';
     title.setCustomValidity('');
+    description.value = task?.description ?? ''; // las tareas guardadas antes no tienen descripción
     date.value = task?.date ?? today();
-    date.max = today();
+    date.max = today(); // la fecha de registro no puede ser futura
     completed.checked = task?.completed ?? false;
     this.$('dialog').showModal();
   }
 });
 
-
+// Modal de importación desde la API
 customElements.define('task-import', class extends Base {
   constructor() {
     super(`
@@ -142,7 +152,7 @@ customElements.define('task-import', class extends Base {
   }
 });
 
-
+// Componente principal: lista, acciones, buscador y filtro
 customElements.define('task-app', class extends Base {
   constructor() {
     super(`
@@ -203,7 +213,7 @@ customElements.define('task-app', class extends Base {
   importTodos(todos) {
     const ids = this.ids();
     this.tasks.unshift(...todos.map((t) => ({
-      id: newId('A', ids), title: t.title, date: today(), completed: t.completed, origin: 'api', apiId: t.id,
+      id: newId('A', ids), title: t.title, description: '', date: today(), completed: t.completed, origin: 'api', apiId: t.id,
     })));
     this.commit();
   }

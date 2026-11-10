@@ -14,7 +14,7 @@ Sin frameworks ni dependencias. Todo el proyecto son 5 archivos:
 
 ## Uso
 
-- **Nueva tarea:** abre el formulario modal con título, fecha de registro y completado. El título debe tener al menos 3 caracteres y la fecha no puede ser futura.
+- **Nueva tarea:** abre el formulario modal con título, descripción, fecha de registro y completado. El título debe tener al menos 3 caracteres y la fecha no puede ser futura. La descripción es opcional (hasta 300 caracteres) y no se muestra en la lista: se ve al editar la tarea.
 - **Casilla de cada tarea:** marca la tarea como completada o pendiente.
 - **✎ / ✕:** editar o eliminar una tarea. Eliminar pide confirmación.
 - **Importar:** abre un modal con las tareas de la API. Selecciona una o varias (o *Seleccionar todas*) y pulsa *Importar*. Si la API falla, se muestra el motivo y un botón *Reintentar*.
@@ -56,7 +56,7 @@ El navegador descarga el archivo una sola vez y lo reutiliza desde la caché.
 | `<task-form>` | Modal (`<dialog>`) para crear y editar tareas, con validación nativa del navegador. |
 | `<task-import>` | Modal (`<dialog>`) que consume la API y permite seleccionar tareas. |
 
-Los modales no modifican los datos. Emiten eventos (`save`, `import`) con `bubbles` y `composed` para atravesar el Shadow DOM, y `<task-app>` los recibe y actualiza la lista. Los botones usan un único listener de `click` que lee el atributo `data-act` del elemento pulsado.
+Los modales no modifican los datos. Emiten eventos (`save`, `import`) con `bubbles: true`, para que suban hasta el Shadow DOM de `<task-app>`, donde se escuchan, y con `composed: true`, para que además puedan salir del Shadow DOM si se escuchan desde fuera. `<task-app>` los recibe y actualiza la lista. Los botones usan un único listener de `click` que lee el atributo `data-act` del elemento pulsado.
 
 ### Datos y persistencia
 
@@ -64,15 +64,16 @@ Las tareas se guardan como un array JSON en `localStorage["tareas"]`:
 
 ```json
 [
-  { "id": "TSK-L-MHN2K8QZ-7F3A", "title": "Comprar café", "date": "2026-11-06", "completed": false, "origin": "local" },
-  { "id": "TSK-A-MHN2K9AB-X2P1", "title": "delectus aut autem", "date": "2026-11-06", "completed": false, "origin": "api", "apiId": 1 }
+  { "id": "TSK-L-MHN2K8QZ-7F3A", "title": "Comprar café", "description": "De Colombia, en grano", "date": "2026-11-06", "completed": false, "origin": "local" },
+  { "id": "TSK-A-MHN2K9AB-X2P1", "title": "delectus aut autem", "description": "", "date": "2026-11-06", "completed": false, "origin": "api", "apiId": 1 }
 ]
 ```
 
 | Campo | Descripción |
 |---|---|
 | `id` | Identificador propio (ver abajo). |
-| `title` | Título o descripción de la tarea. |
+| `title` | Título de la tarea. |
+| `description` | Descripción breve y opcional (hasta 300 caracteres). Se guarda con la tarea y se ve al editarla, pero no aparece en la lista. En las importadas está vacía. |
 | `date` | Fecha de registro (`AAAA-MM-DD`). |
 | `completed` | Estado (booleano). |
 | `origin` | `local` (creada por el usuario) o `api` (importada). |
