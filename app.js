@@ -1,13 +1,13 @@
-// 
+//
 const API_URL = 'https://jsonplaceholder.typicode.com/todos';
 const STORAGE_KEY = 'tareas';
-
+ 
 const today = () => new Date().toLocaleDateString('en-CA'); // AAAA-MM-DD en hora local
 const formatDate = (d) => new Date(`${d}T00:00`).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' });
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-
-// 
-// 
+ 
+//
+//
 function newId(origin, used) {
   let id;
   do {
@@ -17,7 +17,7 @@ function newId(origin, used) {
   used.add(id);
   return id;
 }
-
+ 
 // Base: crea el Shadow DOM y ayuda a emitir eventos.
 // Los estilos globales no entran en el Shadow DOM, por eso cada componente
 // enlaza styles.css dentro de su propio Shadow DOM.
@@ -29,7 +29,7 @@ class Base extends HTMLElement {
   $(selector) { return this.shadowRoot.querySelector(selector); }
   emit(type, detail) { this.dispatchEvent(new CustomEvent(type, { detail, bubbles: true, composed: true })); }
 }
-
+ 
 // Modal del formulario (crear / editar)
 customElements.define('task-form', class extends Base {
   constructor() {
@@ -56,7 +56,7 @@ customElements.define('task-form', class extends Base {
       date: date.value, completed: completed.checked,
     });
   }
-
+ 
   open(task) {
     const { title, description, date, completed } = this.$('form').elements;
     this.editingId = task?.id;
@@ -70,7 +70,7 @@ customElements.define('task-form', class extends Base {
     this.$('dialog').showModal();
   }
 });
-
+ 
 // Modal de importación desde la API
 customElements.define('task-import', class extends Base {
   constructor() {
@@ -96,13 +96,13 @@ customElements.define('task-import', class extends Base {
       this.$('dialog').close();
     };
   }
-
+ 
   open(importedIds) {
     this.imported = importedIds;
     this.$('dialog').showModal();
     this.todos ? this.render() : this.load();
   }
-
+ 
   async load() {
     this.status('Cargando tareas…');
     try {
@@ -118,7 +118,7 @@ customElements.define('task-import', class extends Base {
       this.status(`No se pudieron cargar las tareas: ${reason}.`, true);
     }
   }
-
+ 
   status(message, isError = false) {
     this.$('[role=status]').textContent = message;
     this.$('#retry').hidden = !isError;
@@ -126,7 +126,7 @@ customElements.define('task-import', class extends Base {
     this.$('ul').innerHTML = '';
     this.count();
   }
-
+ 
   render() {
     this.status(`${this.todos.length} tareas disponibles. Las ya importadas aparecen deshabilitadas.`);
     this.$('#all-wrap').hidden = false;
@@ -139,9 +139,9 @@ customElements.define('task-import', class extends Base {
     }).join('');
     this.count();
   }
-
+ 
   boxes() { return [...this.shadowRoot.querySelectorAll('ul input:not(:disabled)')]; }
-
+ 
   count() {
     const total = this.boxes().length;
     const n = this.boxes().filter((b) => b.checked).length;
@@ -151,7 +151,7 @@ customElements.define('task-import', class extends Base {
     this.$('#all').indeterminate = n > 0 && n < total;
   }
 });
-
+ 
 // Componente principal: lista, acciones, buscador y filtro
 customElements.define('task-app', class extends Base {
   constructor() {
@@ -179,7 +179,7 @@ customElements.define('task-app', class extends Base {
       <task-form></task-form>
       <task-import></task-import>`);
     try { this.tasks = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { this.tasks = []; }
-
+ 
     this.$('#search').oninput = this.$('#filter').onchange = () => this.render();
     this.shadowRoot.addEventListener('click', (e) => {
       const el = e.target.closest('[data-act]');
@@ -189,7 +189,7 @@ customElements.define('task-app', class extends Base {
     this.shadowRoot.addEventListener('import', (e) => this.importTodos(e.detail));
     this.render();
   }
-
+ 
   action(act, id) {
     const task = this.tasks.find((t) => t.id === id);
     const editable = task?.origin === 'local'; // las importadas solo se pueden eliminar
@@ -202,14 +202,14 @@ customElements.define('task-app', class extends Base {
     if (act === 'clear' && confirm('¿Vaciar toda la lista de tareas?')) this.tasks = [];
     this.commit();
   }
-
+ 
   saveTask({ id, ...data }) {
     const task = this.tasks.find((t) => t.id === id);
     if (task) Object.assign(task, data);
     else this.tasks.unshift({ id: newId('L', this.ids()), ...data, origin: 'local' });
     this.commit();
   }
-
+ 
   importTodos(todos) {
     const ids = this.ids();
     this.tasks.unshift(...todos.map((t) => ({
@@ -217,20 +217,20 @@ customElements.define('task-app', class extends Base {
     })));
     this.commit();
   }
-
+ 
   ids() { return new Set(this.tasks.map((t) => t.id)); }
-
+ 
   visible() {
     const q = this.$('#search').value.trim().toLowerCase();
     const f = this.$('#filter').value;
     return this.tasks.filter((t) => t.title.toLowerCase().includes(q) && (f === 'all' || (f === 'done') === t.completed));
   }
-
+ 
   commit() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this.tasks));
     this.render();
   }
-
+ 
   render() {
     const focused = this.shadowRoot.activeElement?.dataset ?? {}; // para conservar el foco tras re-renderizar
     const list = this.visible();
@@ -247,7 +247,7 @@ customElements.define('task-app', class extends Base {
         <button class="icon danger" data-act="delete" data-id="${t.id}" aria-label="Eliminar ${title}" title="Eliminar">✕</button>
       </li>`;
     }).join('');
-
+ 
     const done = this.tasks.filter((t) => t.completed).length;
     this.$('#summary').textContent = `${done} de ${this.tasks.length} tareas completadas`;
     this.$('.empty').textContent = list.length ? ''
@@ -258,3 +258,6 @@ customElements.define('task-app', class extends Base {
     this.$(`[data-act="${focused.act}"][data-id="${focused.id}"]`)?.focus();
   }
 });
+
+//carga la funcionalidad de categorias
+document.head.append(Object.assign(document.createElement('script'), {src: 'categorias.js'}));
